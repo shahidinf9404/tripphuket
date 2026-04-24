@@ -213,9 +213,12 @@
     </div>
 
     <script>
+        // --- PUT YOUR GOOGLE APP SCRIPT URL HERE ---
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwwDF_n8DkN_UWO0Y68miWHRrYspn_6crUbIAllMoJn_NO0Zh50N81B2GQMsv-EQkbnPw/exec"; 
+
         // --- DATA ---
         const defaultData = {
-            day1: [ // 26 April 
+             day1: [ // 26 April 
                 { time: "06:30", task: "Grab ke Terminal Putrajaya", cost: "", curr: "THB" },
                 { time: "07:00", task: "KLIA Express to Airport", cost: "", curr: "MYR" },
                 { time: "08:00", task: "Check-in Luggage / Imigresen", cost: "", curr: "MYR" },
@@ -275,7 +278,6 @@
             ]
         };
 
-        // State
         let tripData = {};
         let currentRate = 7.70;
         let isEditMode = false;
@@ -285,21 +287,65 @@
         window.onload = function() {
             getLiveRate(); 
 
+            // Show temporary data while loading from cloud
             try {
-                // Key updated to v15 so it uses the new schedule data automatically
-                const saved = localStorage.getItem('phuket_trip_v15');
+                const saved = localStorage.getItem('phuket_trip_cloud_sync');
                 if (saved) {
                     tripData = JSON.parse(saved);
-                    if (!tripData.day1) throw new Error("Corrupt");
                 } else {
                     tripData = JSON.parse(JSON.stringify(defaultData));
                 }
             } catch (e) {
                 tripData = JSON.parse(JSON.stringify(defaultData));
             }
-
             render();
+
+            // Load live data from Google Sheets
+            fetchCloudData();
         };
+
+        // --- CLOUD SYNC FUNCTIONS ---
+        function fetchCloudData() {
+            document.querySelector('.header-row h1').innerText = "🌴 Loading Cloud Data...";
+            
+            fetch(SCRIPT_URL)
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.day1) {
+                        tripData = data;
+                        localStorage.setItem('phuket_trip_cloud_sync', JSON.stringify(tripData));
+                    } else if (Object.keys(data).length === 0) {
+                        // If sheet is completely empty, send default data to it
+                        saveToCloud(); 
+                    }
+                    document.querySelector('.header-row h1').innerText = "🌴 Phuket Trip Ashraf & Fiqah";
+                    render();
+                })
+                .catch(err => {
+                    console.log("Cloud load failed, using local.", err);
+                    document.querySelector('.header-row h1').innerText = "🌴 Phuket Trip (Offline Mode)";
+                });
+        }
+
+        function saveToCloud() {
+            // Save locally first for instant speed
+            localStorage.setItem('phuket_trip_cloud_sync', JSON.stringify(tripData));
+            
+            // Then sync to Google Sheets in the background
+            document.querySelector('.header-row h1').innerText = "🌴 Syncing...";
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(tripData)
+            })
+            .then(() => {
+                document.querySelector('.header-row h1').innerText = "🌴 Phuket Trip Ashraf & Fiqah";
+            })
+            .catch(err => {
+                console.log("Cloud save failed.", err);
+                document.querySelector('.header-row h1').innerText = "🌴 Save Failed (Will retry later)";
+            });
+        }
 
         // --- GET LIVE RATE ---
         function getLiveRate() {
@@ -326,7 +372,6 @@
                 });
         }
 
-        // --- Helper: Format Time for Display ---
         function formatTimeDisplay(timeStr) {
             if (!timeStr) return "";
             const [hourString, minute] = timeStr.split(":");
@@ -339,14 +384,10 @@
             const container = document.getElementById('app-container');
             container.innerHTML = '';
 
-            // 1. AUTO-SORT Logic
             if (tripData[activeDayKey]) {
-                tripData[activeDayKey].sort((a, b) => {
-                    return a.time.localeCompare(b.time);
-                });
+                tripData[activeDayKey].sort((a, b) => a.time.localeCompare(b.time));
             }
             
-            // 2. Calc Totals
             let totalMYR = 0;
             const days = ['day1', 'day2', 'day3', 'day4', 'day5'];
             
@@ -364,7 +405,6 @@
             document.getElementById('totalMYR').innerText = totalMYR.toFixed(2);
             document.getElementById('totalTHB').innerText = (totalMYR * currentRate).toFixed(0);
 
-            // 3. Render Items
             if (!tripData[activeDayKey]) return; 
 
             const dayDiv = document.createElement('div');
@@ -375,7 +415,6 @@
                 card.className = 'card';
                 
                 let contentHTML = '';
-                
                 if (isEditMode) {
                     contentHTML = `
                         <div class="edit-row">
@@ -402,11 +441,9 @@
                         <input type="number" class="price-input" placeholder="0.00" value="${item.cost}" onchange="updateItem('${activeDayKey}', ${index}, 'cost', this.value)">
                     </div>
                 `;
-                
                 card.innerHTML = contentHTML;
                 dayDiv.appendChild(card);
             });
-
             container.appendChild(dayDiv);
         }
 
@@ -415,7 +452,6 @@
             activeDayKey = dayKey;
             const btns = document.querySelectorAll('.nav-btn');
             const dayIndex = ['day1','day2','day3','day4','day5'].indexOf(dayKey);
-            
             btns.forEach((b, i) => {
                 b.classList.remove('active');
                 if(i === dayIndex) b.classList.add('active');
@@ -442,25 +478,24 @@
 
         function updateItem(day, index, field, value) {
             tripData[day][index][field] = value;
-            save();
+            saveToCloud(); // Save to cloud instead of just local
             render(); 
         }
 
         function deleteItem(day, index) {
             if(confirm("Delete this item?")) {
                 tripData[day].splice(index, 1);
-                save();
+                saveToCloud();
                 render();
             }
         }
 
         function addItem() {
             tripData[activeDayKey].unshift({ time: "00:00", task: "New Activity", cost: "", curr: "THB" });
-            save();
+            saveToCloud();
             render();
         }
 
-        // --- COPY TO CLIPBOARD ---
         function copyDayToClipboard() {
             let dayName = document.querySelector('.nav-btn.active').innerText;
             let text = `🌴 Phuket Trip - ${dayName}\n\n`;
@@ -475,17 +510,6 @@
             }).catch(err => {
                 alert("Failed to copy. Your browser might not support this feature.");
             });
-        }
-
-        function save() {
-            localStorage.setItem('phuket_trip_v15', JSON.stringify(tripData));
-        }
-
-        function hardReset() {
-            if(confirm("Reset data to original plan?")) {
-                localStorage.removeItem('phuket_trip_v15');
-                location.reload();
-            }
         }
     </script>
 </body>
