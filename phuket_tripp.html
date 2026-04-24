@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Phuket Trip Ashraf & Fiqah</title>
+    <style>
+        :root {
+            --primary: #007bff;
+            --bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --text: #212529;
+            --danger: #ff4d4d;
+            --green: #28a745;
+            --add-color: #17a2b8;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 15px 15px 200px 15px;
+        }
+
+        /* HEADER */
+        .header-row {
+            background: #fff; padding: 15px;
+            border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            margin-bottom: 10px;
+            text-align: left;
+        }
+        h1 { margin: 0; font-size: 1.1rem; color: #333; font-weight: 800; }
+        
+        /* RATE INFO & REFRESH BUTTON */
+        .rate-box {
+            display: flex; justify-content: center; align-items: center; gap: 8px;
+            font-size: 0.85rem; color: #666;
+            margin-bottom: 10px;
+            background: rgba(0,0,0,0.03); padding: 8px; border-radius: 8px;
+        }
+        
+        /* REFRESH ICON ONLY - TRANSPARENT */
+        .refresh-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer; 
+            padding: 0; 
+            font-size: 1.1rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.3s ease;
+        }
+        .refresh-btn:active { transform: rotate(180deg); }
+
+        /* EDIT BUTTON CONTAINER */
+        .edit-container {
+            margin-bottom: 15px;
+        }
+        .mode-btn {
+            background: var(--primary); color: white; border: none;
+            width: 100%; padding: 12px; border-radius: 12px; font-weight: 700;
+            font-size: 0.95rem; cursor: pointer;
+            box-shadow: 0 3px 6px rgba(0,123,255,0.2);
+            transition: background 0.2s, transform 0.1s;
+        }
+        .mode-btn:active { transform: scale(0.98); }
+        .mode-btn.saving { background: var(--green); }
+
+        /* NAV TABS */
+        .nav {
+            display: flex; gap: 5px; margin-bottom: 10px; overflow-x: auto;
+        }
+        .nav-btn {
+            flex: 1; min-width: 70px; background: #fff; border: 1px solid #ddd; padding: 10px 0;
+            border-radius: 8px; cursor: pointer; font-size: 0.85rem;
+            font-weight: 600; color: #666; white-space: nowrap;
+        }
+        .nav-btn.active {
+            background: var(--primary); color: white; border-color: var(--primary);
+            box-shadow: 0 4px 6px rgba(0,123,255,0.2);
+        }
+
+        /* ADD BUTTON CONTAINER */
+        #addSection {
+            display: none;
+            margin-bottom: 15px;
+            animation: slideDown 0.3s ease;
+        }
+        .add-btn {
+            background: #e3f2fd; color: #007bff; border: 2px dashed #007bff;
+            width: 100%; padding: 12px; border-radius: 12px; font-weight: 700;
+            font-size: 0.95rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .add-btn:active { background: #bbdefb; }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* CARDS */
+        .day-container { display: none; }
+        .day-container.active { display: block; }
+
+        .card {
+            background: var(--card-bg); border-radius: 12px; padding: 15px;
+            margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+            transition: all 0.3s ease;
+        }
+
+        /* VIEW MODE */
+        .view-row { display: flex; align-items: flex-start; margin-bottom: 12px; }
+        .view-time {
+            font-weight: 800; color: var(--primary); font-size: 0.9rem;
+            min-width: 80px; flex-shrink: 0;
+        }
+        .view-task { font-weight: 600; font-size: 1rem; line-height: 1.4; color: #333; }
+
+        /* EDIT MODE */
+        .edit-row { display: flex; align-items: center; gap: 5px; margin-bottom: 10px; }
+        .input-time {
+            width: 90px; padding: 8px; border: 1px solid #ddd; border-radius: 6px;
+            font-weight: 700; color: var(--primary); font-size: 0.9rem;
+            font-family: inherit; cursor: pointer;
+        }
+        .input-task {
+            flex-grow: 1; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem;
+        }
+        .delete-btn {
+            background: #fff0f0; color: var(--danger); border: 1px solid #ffcccc;
+            width: 35px; height: 35px; border-radius: 50%;
+            font-size: 14px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; flex-shrink: 0;
+        }
+
+        /* MONEY ROW */
+        .money-row {
+            display: flex; gap: 8px; align-items: center; background: #f8f9fa;
+            padding: 8px; border-radius: 8px; border: 1px solid #eee;
+        }
+        .curr-select {
+            background: #fff; border: 1px solid #ddd; border-radius: 6px;
+            padding: 6px; font-weight: bold; font-size: 0.8rem;
+        }
+        .price-input {
+            flex-grow: 1; border: none; background: transparent; font-size: 1.1rem;
+            padding: 2px; outline: none; font-weight: 500; color: #333;
+        }
+
+        /* FOOTER */
+        .footer-fixed {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: white; padding: 20px 25px;
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.1); z-index: 9999;
+            border-top-left-radius: 20px; border-top-right-radius: 20px;
+        }
+        .total-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .total-val { font-weight: 800; font-size: 1.4rem; color: var(--primary); }
+        
+        .reset-link { 
+            text-align: center; font-size: 0.75rem; color: #999; 
+            text-decoration: underline; cursor: pointer; margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-row">
+        <h1>🌴 Phuket Trip Ashraf & Fiqah</h1>
+    </div>
+
+    <div class="rate-box">
+        <span>Rate: 1 MYR = <strong id="rateDisplay">...</strong> THB</span>
+        <button class="refresh-btn" id="refreshBtn" onclick="getLiveRate()" title="Update Rate">
+            🔄
+        </button>
+    </div>
+
+    <div class="edit-container">
+        <button id="editToggle" class="mode-btn" onclick="toggleEdit()">✏️ Edit Plan</button>
+    </div>
+
+    <div class="nav">
+        <button class="nav-btn active" onclick="switchTab('day1')">26 Apr</button>
+        <button class="nav-btn" onclick="switchTab('day2')">27 Apr</button>
+        <button class="nav-btn" onclick="switchTab('day3')">28 Apr</button>
+        <button class="nav-btn" onclick="switchTab('day4')">29 Apr</button>
+        <button class="nav-btn" onclick="switchTab('day5')">30 Apr</button>
+    </div>
+
+    <div id="addSection">
+        <button class="add-btn" onclick="addItem()">
+            <span>➕</span> Add Activity (Top)
+        </button>
+        <button class="add-btn" style="margin-top: 10px; background: #f0fdf4; color: #16a34a; border-color: #16a34a;" onclick="copyDayToClipboard()">
+            <span>📋</span> Copy Day Itinerary
+        </button>
+    </div>
+
+    <div id="app-container"></div>
+
+    <div class="footer-fixed">
+        <div class="total-row">
+            <span style="color:#666;">Total (MYR)</span>
+            <span class="total-val">RM <span id="totalMYR">0.00</span></span>
+        </div>
+        <div class="total-row">
+            <span style="color:#666; font-size:0.9rem;">Est. (THB)</span>
+            <span style="color:#666; font-weight:600;">฿ <span id="totalTHB">0</span></span>
+        </div>
+        <div class="reset-link" onclick="hardReset()">🔄 Reset Data (Restore Original)</div>
+    </div>
+
+    <script>
+        // --- DATA ---
+        const defaultData = {
+            day1: [ // 26 April 
+                { time: "06:30", task: "Grab ke Terminal Putrajaya", cost: "", curr: "THB" },
+                { time: "07:00", task: "KLIA Express to Airport", cost: "", curr: "MYR" },
+                { time: "08:00", task: "Check-in Luggage / Imigresen", cost: "", curr: "MYR" },
+                { time: "10:00", task: "Flight AK832 Depart to Phuket", cost: "", curr: "MYR" },
+                { time: "10:35", task: "Sampai Airport Phuket (Local Time)", cost: "", curr: "THB" },
+                { time: "12:00", task: "Transfer ke Hotel / Lunch", cost: "", curr: "THB" },
+                { time: "14:00", task: "Check In Phoenix Grand Hotel", cost: "", curr: "THB" },
+                { time: "16:30", task: "Lepak Tepi Pantai", cost: "", curr: "THB" },
+                { time: "17:20", task: "MaTam Thai Food (Halal)", cost: "", curr: "THB" },
+                { time: "19:00", task: "Pingpong Show", cost: "", curr: "THB" },
+                { time: "21:00", task: "Bangla Road", cost: "", curr: "THB" },
+                { time: "21:30", task: "Jalan ke 7-Eleven", cost: "", curr: "THB" },
+                { time: "23:59", task: "Balik Hotel", cost: "", curr: "THB" }
+            ],
+            day2: [ // 27 April 
+                { time: "09:00", task: "Keluar Hotel", cost: "", curr: "THB" },
+                { time: "09:15", task: "Harissa’s Curries Rice Factory (Dekat Masjid Nurul)", cost: "", curr: "THB" },
+                { time: "09:45", task: "Gerak ke Cafe Phuket Viewpoint", cost: "", curr: "THB" },
+                { time: "10:30", task: "Cafe Phuket Viewpoint", cost: "", curr: "THB" },
+                { time: "11:30", task: "Pergi Mall", cost: "", curr: "THB" },
+                { time: "13:30", task: "Balik Hotel", cost: "", curr: "THB" },
+                { time: "15:00", task: "Gerak ke Freedom Beach", cost: "", curr: "THB" },
+                { time: "15:30", task: "Freedom Beach", cost: "", curr: "THB" },
+                { time: "17:30", task: "Gerak ke Kalim Beach", cost: "", curr: "THB" },
+                { time: "18:00", task: "Kalim Beach", cost: "", curr: "THB" },
+                { time: "19:00", task: "Balik Hotel", cost: "", curr: "THB" },
+                { time: "20:00", task: "Ke Malim Plaza (Makan Malam)", cost: "", curr: "THB" },
+                { time: "22:30", task: "Gerak ke Bangla Road", cost: "", curr: "THB" }
+            ],
+            day3: [ // 28 April 
+                { time: "07:00", task: "Keluar Hotel", cost: "", curr: "THB" },
+                { time: "07:05", task: "Pipi Island (7AM - 6PM)", cost: "", curr: "THB" },
+                { time: "19:00", task: "Gerak ke Hotel", cost: "", curr: "THB" },
+                { time: "21:00", task: "Ke Malim Plaza (Makan Malam)", cost: "", curr: "THB" },
+                { time: "22:30", task: "Gerak ke Bangla Road", cost: "", curr: "THB" },
+                { time: "23:59", task: "Balik Hotel", cost: "", curr: "THB" }
+            ],
+            day4: [ // 29 April 
+                { time: "09:00", task: "Keluar Hotel", cost: "", curr: "THB" },
+                { time: "10:00", task: "Cari Massage", cost: "", curr: "THB" },
+                { time: "11:00", task: "Old Town", cost: "", curr: "THB" },
+                { time: "14:00", task: "Cashew Nut Factory", cost: "", curr: "THB" },
+                { time: "15:00", task: "Tree Monkey", cost: "", curr: "THB" },
+                { time: "18:00", task: "Kalim Rim Lay Restaurant", cost: "", curr: "THB" },
+                { time: "19:00", task: "Chillva Market", cost: "", curr: "THB" },
+                { time: "20:00", task: "Gerak ke Hotel", cost: "", curr: "THB" },
+                { time: "21:00", task: "Ke Malim Plaza (Makan Malam)", cost: "", curr: "THB" },
+                { time: "22:30", task: "Gerak ke Bangla Road", cost: "", curr: "THB" },
+                { time: "23:59", task: "Balik Hotel", cost: "", curr: "THB" }
+            ],
+            day5: [ // 30 April 
+                { time: "09:00", task: "Check Out Hotel", cost: "", curr: "THB" },
+                { time: "10:00", task: "Gerak ke Airport Phuket", cost: "", curr: "THB" },
+                { time: "11:00", task: "Check-in Flight", cost: "", curr: "THB" },
+                { time: "13:35", task: "Flight AK825 Balik KL", cost: "", curr: "THB" },
+                { time: "16:10", task: "Selamat Sampai KLIA T2", cost: "", curr: "MYR" }
+            ]
+        };
+
+        // State
+        let tripData = {};
+        let currentRate = 7.70;
+        let isEditMode = false;
+        let activeDayKey = 'day1';
+
+        // --- INITIALIZE ---
+        window.onload = function() {
+            getLiveRate(); 
+
+            try {
+                // Key updated to v15 so it uses the new schedule data automatically
+                const saved = localStorage.getItem('phuket_trip_v15');
+                if (saved) {
+                    tripData = JSON.parse(saved);
+                    if (!tripData.day1) throw new Error("Corrupt");
+                } else {
+                    tripData = JSON.parse(JSON.stringify(defaultData));
+                }
+            } catch (e) {
+                tripData = JSON.parse(JSON.stringify(defaultData));
+            }
+
+            render();
+        };
+
+        // --- GET LIVE RATE ---
+        function getLiveRate() {
+            const btn = document.getElementById('refreshBtn');
+            const display = document.getElementById('rateDisplay');
+            
+            btn.innerHTML = "⏳";
+            display.style.opacity = "0.5";
+
+            fetch('https://api.exchangerate-api.com/v4/latest/MYR')
+                .then(r => r.json())
+                .then(d => { 
+                    currentRate = d.rates.THB; 
+                    display.innerText = currentRate.toFixed(2);
+                    display.style.opacity = "1";
+                    btn.innerHTML = "🔄"; 
+                    render();
+                })
+                .catch(e => {
+                    display.innerText = "7.70 (Offline)";
+                    display.style.opacity = "1";
+                    btn.innerHTML = "⚠️"; 
+                    render();
+                });
+        }
+
+        // --- Helper: Format Time for Display ---
+        function formatTimeDisplay(timeStr) {
+            if (!timeStr) return "";
+            const [hourString, minute] = timeStr.split(":");
+            const hour = +hourString % 24;
+            return (hour % 12 || 12) + ":" + minute + (hour < 12 ? " AM" : " PM");
+        }
+
+        // --- RENDERING ---
+        function render() {
+            const container = document.getElementById('app-container');
+            container.innerHTML = '';
+
+            // 1. AUTO-SORT Logic
+            if (tripData[activeDayKey]) {
+                tripData[activeDayKey].sort((a, b) => {
+                    return a.time.localeCompare(b.time);
+                });
+            }
+            
+            // 2. Calc Totals
+            let totalMYR = 0;
+            const days = ['day1', 'day2', 'day3', 'day4', 'day5'];
+            
+            days.forEach(day => {
+                if(tripData[day]) {
+                    tripData[day].forEach(item => {
+                        let cost = parseFloat(item.cost);
+                        if (!isNaN(cost)) {
+                            if (item.curr === 'MYR') totalMYR += cost;
+                            else totalMYR += (cost / currentRate);
+                        }
+                    });
+                }
+            });
+            document.getElementById('totalMYR').innerText = totalMYR.toFixed(2);
+            document.getElementById('totalTHB').innerText = (totalMYR * currentRate).toFixed(0);
+
+            // 3. Render Items
+            if (!tripData[activeDayKey]) return; 
+
+            const dayDiv = document.createElement('div');
+            dayDiv.className = 'day-container active';
+
+            tripData[activeDayKey].forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                
+                let contentHTML = '';
+                
+                if (isEditMode) {
+                    contentHTML = `
+                        <div class="edit-row">
+                            <input type="time" class="input-time" value="${item.time}" onchange="updateItem('${activeDayKey}', ${index}, 'time', this.value)">
+                            <input type="text" class="input-task" value="${item.task}" onchange="updateItem('${activeDayKey}', ${index}, 'task', this.value)">
+                            <div class="delete-btn" onclick="deleteItem('${activeDayKey}', ${index})">✕</div>
+                        </div>
+                    `;
+                } else {
+                    contentHTML = `
+                        <div class="view-row">
+                            <div class="view-time">${formatTimeDisplay(item.time)}</div>
+                            <div class="view-task">${item.task}</div>
+                        </div>
+                    `;
+                }
+
+                contentHTML += `
+                    <div class="money-row">
+                        <select class="curr-select" onchange="updateItem('${activeDayKey}', ${index}, 'curr', this.value)">
+                            <option value="MYR" ${item.curr === 'MYR' ? 'selected' : ''}>MYR</option>
+                            <option value="THB" ${item.curr === 'THB' ? 'selected' : ''}>THB</option>
+                        </select>
+                        <input type="number" class="price-input" placeholder="0.00" value="${item.cost}" onchange="updateItem('${activeDayKey}', ${index}, 'cost', this.value)">
+                    </div>
+                `;
+                
+                card.innerHTML = contentHTML;
+                dayDiv.appendChild(card);
+            });
+
+            container.appendChild(dayDiv);
+        }
+
+        // --- ACTIONS ---
+        function switchTab(dayKey) {
+            activeDayKey = dayKey;
+            const btns = document.querySelectorAll('.nav-btn');
+            const dayIndex = ['day1','day2','day3','day4','day5'].indexOf(dayKey);
+            
+            btns.forEach((b, i) => {
+                b.classList.remove('active');
+                if(i === dayIndex) b.classList.add('active');
+            });
+            render();
+        }
+
+        function toggleEdit() {
+            isEditMode = !isEditMode;
+            const btn = document.getElementById('editToggle');
+            const addSec = document.getElementById('addSection');
+            
+            if(isEditMode) {
+                btn.innerText = "✅ Done";
+                btn.classList.add('saving');
+                addSec.style.display = 'block';
+            } else {
+                btn.innerText = "✏️ Edit Plan";
+                btn.classList.remove('saving');
+                addSec.style.display = 'none';
+            }
+            render();
+        }
+
+        function updateItem(day, index, field, value) {
+            tripData[day][index][field] = value;
+            save();
+            render(); 
+        }
+
+        function deleteItem(day, index) {
+            if(confirm("Delete this item?")) {
+                tripData[day].splice(index, 1);
+                save();
+                render();
+            }
+        }
+
+        function addItem() {
+            tripData[activeDayKey].unshift({ time: "00:00", task: "New Activity", cost: "", curr: "THB" });
+            save();
+            render();
+        }
+
+        // --- COPY TO CLIPBOARD ---
+        function copyDayToClipboard() {
+            let dayName = document.querySelector('.nav-btn.active').innerText;
+            let text = `🌴 Phuket Trip - ${dayName}\n\n`;
+            
+            tripData[activeDayKey].forEach(item => {
+                const costStr = item.cost ? ` [${item.curr} ${item.cost}]` : "";
+                text += `${formatTimeDisplay(item.time)} - ${item.task}${costStr}\n`;
+            });
+
+            navigator.clipboard.writeText(text).then(() => {
+                alert(`Itinerary for ${dayName} copied to clipboard! You can now paste it into WhatsApp.`);
+            }).catch(err => {
+                alert("Failed to copy. Your browser might not support this feature.");
+            });
+        }
+
+        function save() {
+            localStorage.setItem('phuket_trip_v15', JSON.stringify(tripData));
+        }
+
+        function hardReset() {
+            if(confirm("Reset data to original plan?")) {
+                localStorage.removeItem('phuket_trip_v15');
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
